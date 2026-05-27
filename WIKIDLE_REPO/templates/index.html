@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WIKIDLE</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <h1>WIKIPENIS</h1>
+    <p>Simply guess what Wikipedia article the excerpt below is from!</p>
+
+    <div class="text-box">
+        {% if wiki_text %}
+        <p class="wiki-text">{{ wiki_text }}</p>
+        {% endif %}
+    </div>
+
+    <form method="POST" class="search-form">
+        <input type="text" name="search" placeholder="Guess something...">
+        <button type="submit">Guess</button>
+    </form>
+
+
+    <div class="box-container">
+
+        <div class="box-column">
+            <h3>Guess</h3>
+            <div class="small-box {{ guess_color }}"">
+                {% if search_text %}
+                {% endif %}
+                <p class=" search-result">{{ search_text }}</p>
+            </div>
+        </div>
+
+        <div class="box-column">
+            <h3>Category</h3>
+            <div class="small-box {{ category_color }}"">
+                {% if guess_category %}
+                <p class=" search-result">{{ guess_category }}</p>
+                {% else %}
+                <p>...</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class=" box-column">
+            <h3>Theme</h3>
+            <div class="small-box {{ theme_color }}">
+                {% if guess_theme %}
+                <p class=" search-result">{{ guess_theme }}</p>
+                {% else %}
+                <p>...</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>
