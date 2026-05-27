@@ -3,7 +3,7 @@ from flask import Flask, render_template, request
 #TODO:
 #implementer hints (billeder?)
 #regex til at fjerne navn/whatever
-#wikiapi til sql
+#wikiapi til sql db 
 #implementer sql delen
 #E/R diagram
 
