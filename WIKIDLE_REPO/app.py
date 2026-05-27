@@ -95,7 +95,8 @@ def home():
                            category_color=category_color,
                            theme_color=theme_color,
                            guess_theme=guess_theme,
-                           guess_category=guess_category)
+                           guess_category=guess_category,
+                           autocomplete_options=example_dict.keys())
 
 #runs the shit
 if __name__ == "__main__":

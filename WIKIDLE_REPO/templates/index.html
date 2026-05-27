@@ -20,7 +20,15 @@
 
     <!-- search bar/box + button-->
     <form method="POST" class="search-form">
-        <input type="text" name="search" placeholder="Guess something...">
+        <input type="text" name="search" placeholder="Guess something..." list="autocomplete-options"
+            autocomplete="off">
+
+        <datalist id="autocomplete-options">
+            {% for option in autocomplete_options %}
+            <option value="{{ option }}">
+                {% endfor %}
+        </datalist>
+
         <button type="submit">Guess</button>
     </form>
 
