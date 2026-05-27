@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
+#bare lige for eksempel indtil vi har sqp up-n-runnin'
 example_dict = {
     "Michael Jackson": {
         "wiki_name": "Michael Jackson",
@@ -45,19 +46,22 @@ def home():
     theme_color = "white"
 
     if request.method == "POST":
+        #get text from search box
         search_text = request.form.get("search")
 
+        #try to make the guess category = "wiki_category" of the search box entry
         try:
             guess_category = example_dict[search_text]["wiki_category"]
         except:
             guess_category = ""
         
+        #try to make the guess theme = "wiki_theme" of the search box entry
         try:
             guess_theme = example_dict[search_text]["wiki_theme"]
         except:
             guess_theme = ""
 
-
+        #colors of boxes
         if search_text == wiki_name:
             guess_color = "green"
         elif search_text != wiki_name:
@@ -73,7 +77,7 @@ def home():
         elif guess_theme != wiki_theme:
             theme_color = "red"
 
-
+    #compile allat
     return render_template("index.html", 
                            wiki_name=wiki_name,
                            search_text=search_text,
@@ -86,5 +90,6 @@ def home():
                            guess_theme=guess_theme,
                            guess_category=guess_category)
 
+#runs the shit
 if __name__ == "__main__":
     app.run(debug=True)

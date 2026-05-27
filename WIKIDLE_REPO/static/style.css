@@ -4,6 +4,7 @@ body {
     text-align: center;
 }
 
+/* allat bare for at gøre baggrunden sløret cmon */
 body::before {
     content: "";
     position: fixed;
