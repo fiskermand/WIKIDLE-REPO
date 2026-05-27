@@ -31,7 +31,7 @@ example_dict = {
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-    search_text = ""
+    search_text = "..."
     wiki_name = example_dict["Michael Jackson"]["wiki_name"]
     wiki_text = example_dict["Michael Jackson"]["wiki_text"]
     wiki_category = example_dict["Michael Jackson"]["wiki_category"]
