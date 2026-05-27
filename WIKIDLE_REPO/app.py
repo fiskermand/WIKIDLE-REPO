@@ -1,11 +1,11 @@
 from flask import Flask, render_template, request
 
 #TODO:
-#implementer hints (billeder?)
-#regex til at fjerne navn/whatever
-#wikiapi til sql db 
+#implementer gæt-tæller + hints (billede og bogstav?)
+#wikiapi til sql db + regex til at fjerne navn/whatever
 #implementer sql delen
 #E/R diagram
+#start/slut skærm
 
 app = Flask(__name__)
 
@@ -23,7 +23,7 @@ example_dict = {
             "American racial barriers and made him a dominant figure worldwide..."
         ),
     },
-    
+
     "Donald Trump": {
         "wiki_name": "Donald Trump",
         "wiki_category": "People",
