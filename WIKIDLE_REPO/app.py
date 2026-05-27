@@ -1,8 +1,15 @@
 from flask import Flask, render_template, request
 
+#TODO:
+#implementer hints (billeder?)
+#regex til at fjerne navn/whatever
+#wikiapi til sql
+#implementer sql delen
+#E/R diagram
+
 app = Flask(__name__)
 
-#bare lige for eksempel indtil vi har sqp up-n-runnin'
+#bare lige for eksempel indtil vi har sql up-n-runnin'
 example_dict = {
     "Michael Jackson": {
         "wiki_name": "Michael Jackson",
