@@ -23,7 +23,7 @@ example_dict = {
             "American racial barriers and made him a dominant figure worldwide..."
         ),
     },
-
+    
     "Donald Trump": {
         "wiki_name": "Donald Trump",
         "wiki_category": "People",
