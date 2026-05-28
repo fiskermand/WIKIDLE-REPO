@@ -1,16 +1,17 @@
 from flask import Flask, render_template, request, session
 
 #TODO:
-#implementer gæt-tæller + hints (billede og bogstav?)
+#hints (billede og bogstav?)
 #wikiapi til sql db + regex til at fjerne navn/whatever
 #implementer sql delen
 #E/R diagram
 #start/slut skærm
+#automatiser valg af wikiside
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
 
-#bare lige for eksempel indtil vi har sql up-n-runnin'
+#EKSEMPEL
 example_dict = {
     "Michael Jackson": {
         "wiki_name": "Michael Jackson",
@@ -41,6 +42,8 @@ example_dict = {
 @app.route("/", methods=["GET", "POST"])
 def home():
     search_text = "..."
+
+    #EKSEMPEL, SKAL AUTOMATISERES:
     wiki_name = example_dict["Michael Jackson"]["wiki_name"]
     wiki_text = example_dict["Michael Jackson"]["wiki_text"]
     wiki_category = example_dict["Michael Jackson"]["wiki_category"]
@@ -134,7 +137,7 @@ def home():
                            guess_category=guess_category,
                            autocomplete_options=example_dict.keys(),
                            guesses=guesses,
-                            guess_count=guess_count)
+                           guess_count=guess_count)
 
 #runs the shit
 if __name__ == "__main__":
