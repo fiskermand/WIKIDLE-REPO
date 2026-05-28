@@ -71,6 +71,7 @@ def home():
             guess_name = ""
             guess_category = ""
             guess_theme = ""
+            wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
 
             guess_color = "white"
             category_color = "white"
@@ -95,6 +96,7 @@ def home():
 
                 if search_text == wiki_name:
                     guess_color = "green"
+                    wiki_name_blurred = wiki_name
                 else:
                     guess_color = "red"
 
