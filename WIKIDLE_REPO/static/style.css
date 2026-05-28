@@ -103,3 +103,28 @@ h1 {
 .green {
     background: green;
 }
+
+.popup-background {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.popup-box {
+    background: white;
+    color: black;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    min-width: 300px;
+}
+
+.popup-box button {
+    margin: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+}

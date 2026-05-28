@@ -24,7 +24,6 @@ example_dict = {
             "he is widely regarded as one of the most culturally significant "
             "figures of the 20th century. His musical achievements broke "
             "American racial barriers and made him a dominant figure worldwide..."
-            "wiki_picture": "url('images/michael.jpg')"
         ),
     },
 
@@ -91,7 +90,7 @@ def home():
             category_color = "white"
             theme_color = "white"
 
-        else:
+        elif action == "guess" and game_state == "playing":
             search_text = request.form.get("search", "").strip()
             guesses = session.get("guesses", [])
 
@@ -114,6 +113,8 @@ def home():
                 if search_text == wiki_name:
                     guess_color = "green"
                     wiki_name_blurred = wiki_name
+                    session["game_state"] = "finished"
+                    game_state = "finished"
                 else:
                     guess_color = "red"
 

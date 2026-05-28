@@ -11,6 +11,34 @@
     <h1>WIKIDLE</h1>
     <p>Simply guess what Wikipedia article the excerpt below is from!</p>
 
+    {% if game_state == "not_started" %}
+    <div class="popup-background">
+        <div class="popup-box">
+            <h2>Welcome to WIKIDLE</h2>
+            <p>Press start to begin guessing.</p>
+
+            <form method="POST">
+                <button type="submit" name="action" value="start">Start Game</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if game_state == "finished" %}
+    <div class="popup-background">
+        <div class="popup-box">
+            <h2>You got it!</h2>
+            <p>The answer was {{ wiki_name }}.</p>
+            <p>You used {{ guess_count }} guesses.</p>
+
+            <form method="POST">
+                <button type="submit" name="action" value="start">Play Again</button>
+                <button type="submit" name="action" value="reset">Back to Start</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- main text, comes from "wiki_text" from app.py-->
     <div class="text-box">
         {% if wiki_text %}
@@ -20,6 +48,7 @@
     </div>
 
     <!-- search bar/box + button-->
+    {% if game_state == "playing" %}
     <form method="POST" class="search-form">
         <input type="text" name="search" placeholder="Guess something..." list="autocomplete-options"
             autocomplete="off">
@@ -33,6 +62,7 @@
         <button type="submit" name="action" value="guess">Guess</button>
         <button type="submit" name="action" value="reset">Reset</button>
     </form>
+    {% endif %}
 
     {% if invalid_guess %}
     <p class="error-message">
