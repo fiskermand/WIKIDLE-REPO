@@ -2,10 +2,8 @@ from flask import Flask, render_template, request, session
 import re, random
 
 # TODO:
-# hints (billede og bogstav?)
 # wikiapi til sql db + regex til at fjerne navn/whatever
 # implementer sql delen
-# automatiser valg af wikiside
 # login / leaderboard
 
 app = Flask(__name__)
