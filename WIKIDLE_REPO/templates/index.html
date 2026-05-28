@@ -50,6 +50,22 @@
         {% endif %}
     </div>
 
+    <!-- image, comes from wiki_picture from app.py -->
+    <div class="image-container">
+        <h3>Image hint</h3>
+        <div class="image-box">
+            <img src="{{ url_for('static', filename=wiki_picture) }}"
+                class="wiki-image {{ image_blur }}">
+            {% if guess_count >= 1 and not image_revealed %}
+            <form method="POST">
+                <button class="reveal-button" type="submit" name="action" value="reveal_image">
+                    Reveal Image
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- search bar/box + button-->
     {% if game_state == "playing" %}
     <form method="POST" class="search-form">
