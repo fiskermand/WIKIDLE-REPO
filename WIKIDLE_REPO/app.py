@@ -24,6 +24,7 @@ example_dict = {
             "figures of the 20th century. His musical achievements broke "
             "American racial barriers and made him a dominant figure worldwide..."
         ),
+        "wiki_picture": "images/Michael_Jackson_1983.jpg.webp"
     },
 
     "Donald Trump": {
@@ -36,6 +37,7 @@ example_dict = {
             "A member of the Republican Party, he served as the 45th president "
             "from 2017 to 2021..."
         ),
+        "wiki_picture": "test"
     },
 
     "Mount Everest": {
@@ -48,6 +50,7 @@ example_dict = {
             "marks part of the China–Nepal border at its summit.[4] Its height was most recently measured in 2020 through a joint "
             "survey by Nepalese and Chinese authorities as 8,848.86 m (29,031 ft 8+1⁄2 in)..."
         ),
+        "wiki_picture": "test"
     },
 
     "Korean War": {
@@ -60,6 +63,7 @@ example_dict = {
             " (Republic of Korea; ROK) and their allies. North Korea was supported by China and the Soviet Union, "
             "while South Korea was supported by the United Nations led by the United States under the auspices of the United Nations Command (UNC)."
         ),
+        "wiki_picture": "test"
     },
 }
 
@@ -71,6 +75,7 @@ def home():
 
     invalid_guess = False
     prev_guess = False
+    image_blur = "blurred"
 
     guess_name = ""
     guess_category = ""
@@ -103,6 +108,7 @@ def home():
             wiki_page = random.choice(list(example_dict.keys()))
 
             session["wiki_page"] = wiki_page
+            session["image_revealed"] = False
             session["game_state"] = "playing"
             session["guess_count"] = 0
             session["guesses"] = []
@@ -113,10 +119,15 @@ def home():
             wiki_text = example_dict[wiki_page]["wiki_text"]
             wiki_category = example_dict[wiki_page]["wiki_category"]
             wiki_theme = example_dict[wiki_page]["wiki_theme"]
+            wiki_picture = example_dict["Michael Jackson"]["wiki_picture"]
             wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
 
         elif action == "reset":
             session.clear()
+            session["game_state"] = "not_started"
+            session["image_revealed"] = False
+            session["guesses"] = []
+            session["wiki_page"] = None
 
             game_state = "not_started"
             search_text = "..."
@@ -135,8 +146,11 @@ def home():
             guess_color = "white"
             category_color = "white"
             theme_color = "white"
+        
+        elif action == "reveal_image":
+            session["image_revealed"] = True
 
-        elif action == "guess" and game_state == "playing":
+        elif action == "guess" and session.get("game_state") == "playing":
             search_text = request.form.get("search", "").strip()
             guesses = session.get("guesses", [])
 
@@ -202,6 +216,11 @@ def home():
         if guess_name == wiki_name:
             wiki_name_blurred = wiki_name
 
+        if session.get("image_revealed", False):
+            image_blur = ""
+        else:
+            image_blur = "blurred"
+
     return render_template(
         "index.html",
         wiki_name=wiki_name,
@@ -222,7 +241,8 @@ def home():
         invalid_guess=invalid_guess,
         prev_guess=prev_guess,
         game_state=game_state,
-        wiki_page=wiki_page
+        wiki_page=wiki_page,
+        image_revealed=session.get("image_revealed", False)
     )
 
 
