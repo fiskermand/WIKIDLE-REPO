@@ -44,6 +44,7 @@ example_dict = {
 @app.route("/", methods=["GET", "POST"])
 def home():
     invalid_guess = False
+    prev_guess = False
     search_text = "..."
 
     # EKSEMPEL, SKAL AUTOMATISERES:
@@ -90,8 +91,10 @@ def home():
             # Only accept the guess if:
             # 1. it exists in example_dict
             # 2. it has not already been guessed
-            if search_text not in example_dict or already_guessed:
+            if search_text not in example_dict:
                 invalid_guess = True
+            elif already_guessed:
+                prev_guess = True
             else:
                 guess_name = example_dict[search_text]["wiki_name"]
                 guess_category = example_dict[search_text]["wiki_category"]
@@ -160,7 +163,8 @@ def home():
         guesses=guesses,
         guess_count=guess_count,
         wiki_name_blurred=wiki_name_blurred,
-        invalid_guess=invalid_guess
+        invalid_guess=invalid_guess,
+        prev_guess=prev_guess
     )
 
 

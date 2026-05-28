@@ -35,9 +35,15 @@
     </form>
 
     {% if invalid_guess %}
-        <p class="error-message">
-            Guess not valid
-        </p>
+    <p class="error-message">
+        Guess not valid
+    </p>
+    {% endif %}
+
+    {% if prev_guess %}
+    <p class="error-message">
+        Already guessed!
+    </p>
     {% endif %}
 
     <!-- CURRENT GUESS BOXES-->
