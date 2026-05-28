@@ -44,9 +44,11 @@ example_dict = {
 
 @app.route("/", methods=["GET", "POST"])
 def home():
+    search_text = "..."
+    game_state = session.get("game_state", "not_started")
+
     invalid_guess = False
     prev_guess = False
-    search_text = "..."
 
     # EKSEMPEL, SKAL AUTOMATISERES:
     wiki_name = example_dict["Michael Jackson"]["wiki_name"]
@@ -67,9 +69,17 @@ def home():
     if request.method == "POST":
         action = request.form.get("action")
 
-        if action == "reset":
+        if action == "start":
+            session["game_state"] = "playing"
             session["guess_count"] = 0
             session["guesses"] = []
+            game_state = "playing"
+
+        elif action == "reset":
+            session["guess_count"] = 0
+            session["guesses"] = []
+            session["game_state"] = "not_started"
+            game_state = "not_started"
 
             search_text = "..."
             guess_name = ""
@@ -165,7 +175,8 @@ def home():
         guess_count=guess_count,
         wiki_name_blurred=wiki_name_blurred,
         invalid_guess=invalid_guess,
-        prev_guess=prev_guess
+        prev_guess=prev_guess,
+        game_state=game_state
     )
 
 
