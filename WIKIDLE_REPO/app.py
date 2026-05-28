@@ -1,18 +1,18 @@
 from flask import Flask, render_template, request, session
 import re
 
-#TODO:
-#hints (billede og bogstav?)
-#wikiapi til sql db + regex til at fjerne navn/whatever
-#implementer sql delen
-#E/R diagram
-#start/slut skærm
-#automatiser valg af wikiside
+# TODO:
+# hints (billede og bogstav?)
+# wikiapi til sql db + regex til at fjerne navn/whatever
+# implementer sql delen
+# E/R diagram
+# start/slut skærm
+# automatiser valg af wikiside
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
 
-#EKSEMPEL
+# EKSEMPEL
 example_dict = {
     "Michael Jackson": {
         "wiki_name": "Michael Jackson",
@@ -40,11 +40,12 @@ example_dict = {
     },
 }
 
+
 @app.route("/", methods=["GET", "POST"])
 def home():
     search_text = "..."
 
-    #EKSEMPEL, SKAL AUTOMATISERES:
+    # EKSEMPEL, SKAL AUTOMATISERES:
     wiki_name = example_dict["Michael Jackson"]["wiki_name"]
     wiki_text = example_dict["Michael Jackson"]["wiki_text"]
     wiki_category = example_dict["Michael Jackson"]["wiki_category"]
@@ -80,16 +81,9 @@ def home():
         else:
             search_text = request.form.get("search", "").strip()
 
-            if search_text not in example_dict:
-                guess_name = ""
-                guess_category = ""
-                guess_theme = ""
-
-                guess_color = "white"
-                category_color = "white"
-                theme_color = "white"
-
-            else:
+            # If the guess is NOT valid, do nothing.
+            # This means the previous valid guess stays displayed.
+            if search_text in example_dict:
                 guess_name = example_dict[search_text]["wiki_name"]
                 guess_category = example_dict[search_text]["wiki_category"]
                 guess_theme = example_dict[search_text]["wiki_theme"]
@@ -127,24 +121,41 @@ def home():
     guesses = session.get("guesses", [])
     guess_count = len(guesses)
 
-    #compile allat
-    return render_template("index.html", 
-                           wiki_name=wiki_name,
-                           search_text=search_text,
-                           guess_name=guess_name,
-                           wiki_text=wiki_text,
-                           wiki_category=wiki_category,
-                           wiki_theme=wiki_theme,
-                           guess_color=guess_color,
-                           category_color=category_color,
-                           theme_color=theme_color,
-                           guess_theme=guess_theme,
-                           guess_category=guess_category,
-                           autocomplete_options=example_dict.keys(),
-                           guesses=guesses,
-                           guess_count=guess_count,
-                           wiki_name_blurred=wiki_name_blurred)
+    # Restore latest valid guess, so invalid guesses do not make the display white.
+    if guesses:
+        latest_guess = guesses[-1]
 
-#runs the shit
+        guess_name = latest_guess["name"]
+        guess_category = latest_guess["category"]
+        guess_theme = latest_guess["theme"]
+
+        guess_color = latest_guess["guess_color"]
+        category_color = latest_guess["category_color"]
+        theme_color = latest_guess["theme_color"]
+
+        if guess_name == wiki_name:
+            wiki_name_blurred = wiki_name
+
+    return render_template(
+        "index.html",
+        wiki_name=wiki_name,
+        search_text=search_text,
+        guess_name=guess_name,
+        wiki_text=wiki_text,
+        wiki_category=wiki_category,
+        wiki_theme=wiki_theme,
+        guess_color=guess_color,
+        category_color=category_color,
+        theme_color=theme_color,
+        guess_theme=guess_theme,
+        guess_category=guess_category,
+        autocomplete_options=example_dict.keys(),
+        guesses=guesses,
+        guess_count=guess_count,
+        wiki_name_blurred=wiki_name_blurred
+    )
+
+
+# runs the shit
 if __name__ == "__main__":
     app.run(debug=True)
