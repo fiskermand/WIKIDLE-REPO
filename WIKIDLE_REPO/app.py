@@ -24,6 +24,7 @@ example_dict = {
             "he is widely regarded as one of the most culturally significant "
             "figures of the 20th century. His musical achievements broke "
             "American racial barriers and made him a dominant figure worldwide..."
+            "wiki_picture": "url('images/michael.jpg')"
         ),
     },
 
