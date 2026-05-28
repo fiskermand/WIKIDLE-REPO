@@ -5,9 +5,9 @@ import re
 # hints (billede og bogstav?)
 # wikiapi til sql db + regex til at fjerne navn/whatever
 # implementer sql delen
-# E/R diagram
 # start/slut skærm
 # automatiser valg af wikiside
+# login / leaderboard
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
