@@ -42,6 +42,12 @@ h1 {
     font-style: italic;
 }
 
+.wiki_name_blurred {
+    font-style: bold;
+    letter-spacing: 5px;
+    font-size: larger;
+}
+
 .search-form {
     margin: 30px;
 }

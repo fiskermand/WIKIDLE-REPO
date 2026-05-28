@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, session
+import re
 
 #TODO:
 #hints (billede og bogstav?)
@@ -48,6 +49,8 @@ def home():
     wiki_text = example_dict["Michael Jackson"]["wiki_text"]
     wiki_category = example_dict["Michael Jackson"]["wiki_category"]
     wiki_theme = example_dict["Michael Jackson"]["wiki_theme"]
+
+    wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
 
     guess_name = ""
     guess_category = ""
@@ -137,7 +140,8 @@ def home():
                            guess_category=guess_category,
                            autocomplete_options=example_dict.keys(),
                            guesses=guesses,
-                           guess_count=guess_count)
+                           guess_count=guess_count,
+                           wiki_name_blurred=wiki_name_blurred)
 
 #runs the shit
 if __name__ == "__main__":
