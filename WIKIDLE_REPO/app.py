@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 
 #TODO:
 #implementer gæt-tæller + hints (billede og bogstav?)
@@ -8,6 +8,7 @@ from flask import Flask, render_template, request
 #start/slut skærm
 
 app = Flask(__name__)
+app.secret_key = "dev-secret-key"
 
 #bare lige for eksempel indtil vi har sql up-n-runnin'
 example_dict = {
@@ -45,6 +46,7 @@ def home():
     wiki_category = example_dict["Michael Jackson"]["wiki_category"]
     wiki_theme = example_dict["Michael Jackson"]["wiki_theme"]
 
+    guess_name = ""
     guess_category = ""
     guess_theme = ""
 
@@ -53,41 +55,60 @@ def home():
     theme_color = "white"
 
     if request.method == "POST":
-        #get text from search box
-        search_text = request.form.get("search")
+        action = request.form.get("action")
 
-        #try to make the guess category = "wiki_category" of the search box entry
-        try:
-            guess_category = example_dict[search_text]["wiki_category"]
-        except:
+        if action == "reset":
+            session["guess_count"] = 0
+            search_text = "..."
+            guess_name = ""
             guess_category = ""
-        
-        #try to make the guess theme = "wiki_theme" of the search box entry
-        try:
-            guess_theme = example_dict[search_text]["wiki_theme"]
-        except:
             guess_theme = ""
 
-        #colors of boxes
-        if search_text == wiki_name:
-            guess_color = "green"
-        elif search_text != wiki_name:
-            guess_color = "red"
+            guess_color = "white"
+            category_color = "white"
+            theme_color = "white"
 
-        if guess_category == wiki_category:
-            category_color = "green"
-        elif guess_category != wiki_category:
-            category_color = "red"
+        else:
+            search_text = request.form.get("search", "").strip()
 
-        if guess_theme == wiki_theme:
-            theme_color = "green"
-        elif guess_theme != wiki_theme:
-            theme_color = "red"
+            if search_text not in example_dict:
+                guess_name = ""
+                guess_category = ""
+                guess_theme = ""
+
+                guess_color = "white"
+                category_color = "white"
+                theme_color = "white"
+
+            else:
+                session["guess_count"] = session.get("guess_count", 0) + 1
+
+                guess_name = example_dict[search_text]["wiki_name"]
+                guess_category = example_dict[search_text]["wiki_category"]
+                guess_theme = example_dict[search_text]["wiki_theme"]
+
+                if search_text == wiki_name:
+                    guess_color = "green"
+                else:
+                    guess_color = "red"
+
+                if guess_category == wiki_category:
+                    category_color = "green"
+                else:
+                    category_color = "red"
+
+                if guess_theme == wiki_theme:
+                    theme_color = "green"
+                else:
+                    theme_color = "red"
+
+    guess_count = session.get("guess_count", 0)
 
     #compile allat
     return render_template("index.html", 
                            wiki_name=wiki_name,
                            search_text=search_text,
+                           guess_name=guess_name,
                            wiki_text=wiki_text,
                            wiki_category=wiki_category,
                            wiki_theme=wiki_theme,
@@ -96,7 +117,8 @@ def home():
                            theme_color=theme_color,
                            guess_theme=guess_theme,
                            guess_category=guess_category,
-                           autocomplete_options=example_dict.keys())
+                           autocomplete_options=example_dict.keys(),
+                           guess_count=guess_count)
 
 #runs the shit
 if __name__ == "__main__":

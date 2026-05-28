@@ -29,19 +29,22 @@
                 {% endfor %}
         </datalist>
 
-        <button type="submit">Guess</button>
+        <button type="submit" name="action" value="guess">Guess</button>
+        <button type="submit" name="action" value="reset">Reset</button>
     </form>
 
-    <!-- red/green boxes-->
+    <!-- CURRENT GUESS BOXES-->
     <div class="box-container">
 
         <!-- guess box, text comes from search bar/box above-->
         <div class="box-column">
             <h3>Guess</h3>
-            <div class="small-box {{ guess_color }}"">
-                {% if search_text %}
+            <div class="small-box {{ guess_color }}">
+                {% if guess_name %}
+                <p class="search-result">{{ guess_name }}</p>
+                {% else %}
+                <p>...</p>
                 {% endif %}
-                <p class=" search-result">{{ search_text }}</p>
             </div>
         </div>
 
@@ -70,6 +73,44 @@
         </div>
 
     </div>
+
+    <!-- PREVIOUS GUESS BOXES-->
+    {% for guess in range(guess_count-1) %}
+    <div class="box-container">
+
+        <!-- guess box, text comes from search bar/box above-->
+        {% if guess_count > 0 %}
+        <div class="box-column">
+            <div class="small-box {{ guess_color }}"">
+                <p class=" search-result">{{ search_text }}</p>
+            </div>
+        </div>
+
+        <!-- category box-->
+        <div class="box-column">
+            <div class="small-box {{ category_color }}"">
+                {% if guess_category %}
+                <p class=" search-result">{{ guess_category }}</p>
+                {% else %}
+                <p>...</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- theme box-->
+        <div class=" box-column">
+            <div class="small-box {{ theme_color }}">
+                {% if guess_theme %}
+                <p class=" search-result">{{ guess_theme }}</p>
+                {% else %}
+                <p>...</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+    {% endfor %}
 
 </body>
 
