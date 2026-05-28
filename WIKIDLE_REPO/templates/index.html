@@ -11,12 +11,13 @@
     <h1>WIKIDLE</h1>
     <p>Simply guess what Wikipedia article the excerpt below is from!</p>
 
+    <!-- START SCREEN -->
     {% if game_state == "not_started" %}
     <div class="popup-background">
         <div class="popup-box">
-            <h2>Welcome to WIKIDLE</h2>
+            <h2>Welcome to WIKIDLE!</h2>
+            <p>You will be given a summary of a random Wikipedia article, your goal is to guess which article it is!</p>
             <p>Press start to begin guessing.</p>
-
             <form method="POST">
                 <button type="submit" name="action" value="start">Start Game</button>
             </form>
@@ -24,12 +25,13 @@
     </div>
     {% endif %}
 
+    <!-- END SCREEN -->
     {% if game_state == "finished" %}
     <div class="popup-background">
         <div class="popup-box">
             <h2>You got it!</h2>
-            <p>The answer was {{ wiki_name }}.</p>
-            <p>You used {{ guess_count }} guesses.</p>
+            <p>The answer was {{ wiki_name }}!</p>
+            <p>You used {{ guess_count }} guess(es).</p>
 
             <form method="POST">
                 <button type="submit" name="action" value="start">Play Again</button>
