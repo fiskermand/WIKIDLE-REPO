@@ -5,7 +5,6 @@ import re
 # hints (billede og bogstav?)
 # wikiapi til sql db + regex til at fjerne navn/whatever
 # implementer sql delen
-# start/slut skærm
 # automatiser valg af wikiside
 # login / leaderboard
 
