@@ -4,7 +4,7 @@ import csv
 wiki_api = wikipediaapi.Wikipedia(user_agent='WikiProject (bcgamingdk@gmail.com)', language='en')
 
 
-article_titles = ['Python_(programming_language)', 'Michael Jordan']
+article_titles = ['Python_(programming_languagge)', 'Michael Jordan']
 
 headers = ['title', 'summary', 'category']
 article_elements = []

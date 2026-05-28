@@ -94,6 +94,12 @@ h1 {
     background: red;
 }
 
+.error-message {
+    color: red;
+    font-size: 32px;
+    font-style: bold;
+}
+
 .green {
     background: green;
 }

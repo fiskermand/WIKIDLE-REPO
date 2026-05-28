@@ -34,6 +34,12 @@
         <button type="submit" name="action" value="reset">Reset</button>
     </form>
 
+    {% if invalid_guess %}
+        <p class="error-message">
+            Guess not valid
+        </p>
+    {% endif %}
+
     <!-- CURRENT GUESS BOXES-->
     <div class="box-container">
 
