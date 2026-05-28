@@ -59,6 +59,8 @@ def home():
 
         if action == "reset":
             session["guess_count"] = 0
+            session["guesses"] = []
+
             search_text = "..."
             guess_name = ""
             guess_category = ""
@@ -81,8 +83,6 @@ def home():
                 theme_color = "white"
 
             else:
-                session["guess_count"] = session.get("guess_count", 0) + 1
-
                 guess_name = example_dict[search_text]["wiki_name"]
                 guess_category = example_dict[search_text]["wiki_category"]
                 guess_theme = example_dict[search_text]["wiki_theme"]
@@ -102,7 +102,22 @@ def home():
                 else:
                     theme_color = "red"
 
-    guess_count = session.get("guess_count", 0)
+                guesses = session.get("guesses", [])
+
+                guesses.append({
+                    "name": guess_name,
+                    "category": guess_category,
+                    "theme": guess_theme,
+                    "guess_color": guess_color,
+                    "category_color": category_color,
+                    "theme_color": theme_color
+                })
+
+                session["guesses"] = guesses
+                session["guess_count"] = len(guesses)
+
+    guesses = session.get("guesses", [])
+    guess_count = len(guesses)
 
     #compile allat
     return render_template("index.html", 
@@ -118,7 +133,8 @@ def home():
                            guess_theme=guess_theme,
                            guess_category=guess_category,
                            autocomplete_options=example_dict.keys(),
-                           guess_count=guess_count)
+                           guesses=guesses,
+                            guess_count=guess_count)
 
 #runs the shit
 if __name__ == "__main__":
