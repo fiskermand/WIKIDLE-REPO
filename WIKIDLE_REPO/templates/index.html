@@ -11,14 +11,47 @@
     <h1>WIKIDLE</h1>
     <p>Simply guess what Wikipedia article the excerpt below is from!</p>
 
+    <!-- START SCREEN -->
+    {% if game_state == "not_started" %}
+    <div class="popup-background">
+        <div class="popup-box">
+            <h2>Welcome to WIKIDLE!</h2>
+            <p>You will be given a summary of a random Wikipedia article, your goal is to guess which article it is!</p>
+            <p>Wikidle is a daily game, so it updates everyday with a new article to be guessed.</p>
+            <p>Press start to begin guessing.</p>
+            <form method="POST">
+                <button type="submit" name="action" value="start">Start Game</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- END SCREEN -->
+    {% if game_state == "finished" %}
+    <div class="popup-background">
+        <div class="popup-box">
+            <h2>You got it!</h2>
+            <p>The answer was {{ wiki_name }}!</p>
+            <p>You used {{ guess_count }} guess(es).</p>
+
+            <form method="POST">
+                <button type="submit" name="action" value="start">Play Again</button>
+                <button type="submit" name="action" value="reset">Back to Start</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- main text, comes from "wiki_text" from app.py-->
     <div class="text-box">
         {% if wiki_text %}
+        <p class="wiki_name_blurred">{{ wiki_name_blurred }}</p>
         <p class="wiki-text">{{ wiki_text }}</p>
         {% endif %}
     </div>
 
     <!-- search bar/box + button-->
+    {% if game_state == "playing" %}
     <form method="POST" class="search-form">
         <input type="text" name="search" placeholder="Guess something..." list="autocomplete-options"
             autocomplete="off">
@@ -32,6 +65,19 @@
         <button type="submit" name="action" value="guess">Guess</button>
         <button type="submit" name="action" value="reset">Reset</button>
     </form>
+    {% endif %}
+
+    {% if invalid_guess %}
+    <p class="error-message">
+        Guess not valid
+    </p>
+    {% endif %}
+
+    {% if prev_guess %}
+    <p class="error-message">
+        Already guessed!
+    </p>
+    {% endif %}
 
     <!-- CURRENT GUESS BOXES-->
     <div class="box-container">
@@ -75,41 +121,31 @@
     </div>
 
     <!-- PREVIOUS GUESS BOXES-->
-    {% for guess in range(guess_count-1) %}
+    {% for guess in guesses[:-1] %}
     <div class="box-container">
 
-        <!-- guess box, text comes from search bar/box above-->
-        {% if guess_count > 0 %}
+        <!-- previous guess name -->
         <div class="box-column">
-            <div class="small-box {{ guess_color }}"">
-                <p class=" search-result">{{ search_text }}</p>
+            <div class="small-box {{ guess.guess_color }}">
+                <p class="search-result">{{ guess.name }}</p>
             </div>
         </div>
 
-        <!-- category box-->
+        <!-- previous category -->
         <div class="box-column">
-            <div class="small-box {{ category_color }}"">
-                {% if guess_category %}
-                <p class=" search-result">{{ guess_category }}</p>
-                {% else %}
-                <p>...</p>
-                {% endif %}
+            <div class="small-box {{ guess.category_color }}">
+                <p class="search-result">{{ guess.category }}</p>
             </div>
         </div>
 
-        <!-- theme box-->
-        <div class=" box-column">
-            <div class="small-box {{ theme_color }}">
-                {% if guess_theme %}
-                <p class=" search-result">{{ guess_theme }}</p>
-                {% else %}
-                <p>...</p>
-                {% endif %}
+        <!-- previous theme -->
+        <div class="box-column">
+            <div class="small-box {{ guess.theme_color }}">
+                <p class="search-result">{{ guess.theme }}</p>
             </div>
         </div>
 
     </div>
-    {% endif %}
     {% endfor %}
 
 </body>

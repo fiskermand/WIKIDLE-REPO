@@ -31,6 +31,7 @@ h1 {
 
 .text-box {
     background: white;
+    opacity: 0.9;
     width: 60%;
     margin: 30px auto;
     padding: 20px;
@@ -40,6 +41,12 @@ h1 {
 
 .wiki-text {
     font-style: italic;
+}
+
+.wiki_name_blurred {
+    font-style: bold;
+    letter-spacing: 3px;
+    font-size: larger;
 }
 
 .search-form {
@@ -52,6 +59,7 @@ h1 {
     font-size: 16px;
     border-radius: 10px;
     border: 2px solid black;
+    opacity: 0.9;
 }
 
 .search-form button {
@@ -60,6 +68,7 @@ h1 {
     cursor: pointer;
     border-radius: 10px;
     border: 2px solid black;
+    opacity: 0.9;
 }
 
 .search-result {
@@ -82,12 +91,48 @@ h1 {
 
 .white {
     background: white;
+    opacity: 0.9;
 }
 
 .red {
     background: red;
+    opacity: 0.9;
 }
 
 .green {
     background: green;
+    opacity: 0.9;
+}
+
+.error-message {
+    color: red;
+    font-size: 32px;
+    font-style: bold;
+}
+
+.popup-background {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.popup-box {
+    background: white;
+    color: black;
+    padding: 30px;
+    border-radius: 15px;
+    border: 5px solid black;
+    text-align: center;
+    min-width: 300px;
+}
+
+.popup-box button {
+    margin: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
 }

@@ -1,16 +1,17 @@
 from flask import Flask, render_template, request, session
+import re, random
 
-#TODO:
-#implementer gæt-tæller + hints (billede og bogstav?)
-#wikiapi til sql db + regex til at fjerne navn/whatever
-#implementer sql delen
-#E/R diagram
-#start/slut skærm
+# TODO:
+# hints (billede og bogstav?)
+# wikiapi til sql db + regex til at fjerne navn/whatever
+# implementer sql delen
+# automatiser valg af wikiside
+# login / leaderboard
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
 
-#bare lige for eksempel indtil vi har sql up-n-runnin'
+# EKSEMPEL
 example_dict = {
     "Michael Jackson": {
         "wiki_name": "Michael Jackson",
@@ -36,15 +37,40 @@ example_dict = {
             "from 2017 to 2021..."
         ),
     },
+
+    "Mount Everest": {
+        "wiki_name": "Mount Everest",
+        "wiki_category": "Earth",
+        "wiki_theme": "Mountain",
+        "wiki_text": (
+            "...(known locally as Sagarmāthā[a] in Nepal and Qomolangma[b] in Tibet Autonomous Region of China) "
+            "is the highest mountain on Earth above sea level. It lies in the Mahalangur Himal sub-range of the Himalayas and "
+            "marks part of the China–Nepal border at its summit.[4] Its height was most recently measured in 2020 through a joint "
+            "survey by Nepalese and Chinese authorities as 8,848.86 m (29,031 ft 8+1⁄2 in)..."
+        ),
+    },
+
+    "Korean War": {
+        "wiki_name": "Korean War",
+        "wiki_category": "Civilization",
+        "wiki_theme": "Wars",
+        "wiki_text": (
+            "...(25 June 1950 – 27 July 1953) was an armed conflict fought on the Korean "
+            "Peninsula between North Korea (Democratic People's Republic of Korea; DPRK) and South Korea"
+            " (Republic of Korea; ROK) and their allies. North Korea was supported by China and the Soviet Union, "
+            "while South Korea was supported by the United Nations led by the United States under the auspices of the United Nations Command (UNC)."
+        ),
+    },
 }
+
 
 @app.route("/", methods=["GET", "POST"])
 def home():
     search_text = "..."
-    wiki_name = example_dict["Michael Jackson"]["wiki_name"]
-    wiki_text = example_dict["Michael Jackson"]["wiki_text"]
-    wiki_category = example_dict["Michael Jackson"]["wiki_category"]
-    wiki_theme = example_dict["Michael Jackson"]["wiki_theme"]
+    game_state = session.get("game_state", "not_started")
+
+    invalid_guess = False
+    prev_guess = False
 
     guess_name = ""
     guess_category = ""
@@ -54,12 +80,54 @@ def home():
     category_color = "white"
     theme_color = "white"
 
+    #defaults for when the game has not started yet
+    wiki_page = session.get("wiki_page")
+    wiki_name = ""
+    wiki_text = "..."
+    wiki_category = ""
+    wiki_theme = ""
+    wiki_name_blurred = ""
+
+    #restore current wiki page from session
+    if wiki_page in example_dict:
+        wiki_name = example_dict[wiki_page]["wiki_name"]
+        wiki_text = example_dict[wiki_page]["wiki_text"]
+        wiki_category = example_dict[wiki_page]["wiki_category"]
+        wiki_theme = example_dict[wiki_page]["wiki_theme"]
+        wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
+
     if request.method == "POST":
         action = request.form.get("action")
 
-        if action == "reset":
+        if action == "start":
+            wiki_page = random.choice(list(example_dict.keys()))
+
+            session["wiki_page"] = wiki_page
+            session["game_state"] = "playing"
             session["guess_count"] = 0
+            session["guesses"] = []
+
+            game_state = "playing"
+
+            wiki_name = example_dict[wiki_page]["wiki_name"]
+            wiki_text = example_dict[wiki_page]["wiki_text"]
+            wiki_category = example_dict[wiki_page]["wiki_category"]
+            wiki_theme = example_dict[wiki_page]["wiki_theme"]
+            wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
+
+        elif action == "reset":
+            session.clear()
+
+            game_state = "not_started"
             search_text = "..."
+
+            wiki_page = None
+            wiki_name = ""
+            wiki_text = "..."
+            wiki_category = ""
+            wiki_theme = ""
+            wiki_name_blurred = ""
+
             guess_name = ""
             guess_category = ""
             guess_theme = ""
@@ -68,27 +136,30 @@ def home():
             category_color = "white"
             theme_color = "white"
 
-        else:
+        elif action == "guess" and game_state == "playing":
             search_text = request.form.get("search", "").strip()
+            guesses = session.get("guesses", [])
+
+            already_guessed = any(
+                guess["name"] == search_text for guess in guesses
+            )
 
             if search_text not in example_dict:
-                guess_name = ""
-                guess_category = ""
-                guess_theme = ""
+                invalid_guess = True
 
-                guess_color = "white"
-                category_color = "white"
-                theme_color = "white"
+            elif already_guessed:
+                prev_guess = True
 
             else:
-                session["guess_count"] = session.get("guess_count", 0) + 1
-
                 guess_name = example_dict[search_text]["wiki_name"]
                 guess_category = example_dict[search_text]["wiki_category"]
                 guess_theme = example_dict[search_text]["wiki_theme"]
 
                 if search_text == wiki_name:
                     guess_color = "green"
+                    wiki_name_blurred = wiki_name
+                    session["game_state"] = "finished"
+                    game_state = "finished"
                 else:
                     guess_color = "red"
 
@@ -102,24 +173,59 @@ def home():
                 else:
                     theme_color = "red"
 
-    guess_count = session.get("guess_count", 0)
+                guesses.append({
+                    "name": guess_name,
+                    "category": guess_category,
+                    "theme": guess_theme,
+                    "guess_color": guess_color,
+                    "category_color": category_color,
+                    "theme_color": theme_color
+                })
 
-    #compile allat
-    return render_template("index.html", 
-                           wiki_name=wiki_name,
-                           search_text=search_text,
-                           guess_name=guess_name,
-                           wiki_text=wiki_text,
-                           wiki_category=wiki_category,
-                           wiki_theme=wiki_theme,
-                           guess_color=guess_color,
-                           category_color=category_color,
-                           theme_color=theme_color,
-                           guess_theme=guess_theme,
-                           guess_category=guess_category,
-                           autocomplete_options=example_dict.keys(),
-                           guess_count=guess_count)
+                session["guesses"] = guesses
+                session["guess_count"] = len(guesses)
 
-#runs the shit
+    guesses = session.get("guesses", [])
+    guess_count = len(guesses)
+
+    if guesses:
+        latest_guess = guesses[-1]
+
+        guess_name = latest_guess["name"]
+        guess_category = latest_guess["category"]
+        guess_theme = latest_guess["theme"]
+
+        guess_color = latest_guess["guess_color"]
+        category_color = latest_guess["category_color"]
+        theme_color = latest_guess["theme_color"]
+
+        if guess_name == wiki_name:
+            wiki_name_blurred = wiki_name
+
+    return render_template(
+        "index.html",
+        wiki_name=wiki_name,
+        search_text=search_text,
+        guess_name=guess_name,
+        wiki_text=wiki_text,
+        wiki_category=wiki_category,
+        wiki_theme=wiki_theme,
+        guess_color=guess_color,
+        category_color=category_color,
+        theme_color=theme_color,
+        guess_theme=guess_theme,
+        guess_category=guess_category,
+        autocomplete_options=example_dict.keys(),
+        guesses=guesses,
+        guess_count=guess_count,
+        wiki_name_blurred=wiki_name_blurred,
+        invalid_guess=invalid_guess,
+        prev_guess=prev_guess,
+        game_state=game_state,
+        wiki_page=wiki_page
+    )
+
+
+# runs the shit
 if __name__ == "__main__":
     app.run(debug=True)
