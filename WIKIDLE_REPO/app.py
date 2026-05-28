@@ -80,10 +80,16 @@ def home():
 
         else:
             search_text = request.form.get("search", "").strip()
+            guesses = session.get("guesses", [])
 
-            # If the guess is NOT valid, do nothing.
-            # This means the previous valid guess stays displayed.
-            if search_text in example_dict:
+            already_guessed = any(
+                guess["name"] == search_text for guess in guesses
+            )
+
+            # Only accept the guess if:
+            # 1. it exists in example_dict
+            # 2. it has not already been guessed
+            if search_text in example_dict and not already_guessed:
                 guess_name = example_dict[search_text]["wiki_name"]
                 guess_category = example_dict[search_text]["wiki_category"]
                 guess_theme = example_dict[search_text]["wiki_theme"]
@@ -104,8 +110,6 @@ def home():
                 else:
                     theme_color = "red"
 
-                guesses = session.get("guesses", [])
-
                 guesses.append({
                     "name": guess_name,
                     "category": guess_category,
@@ -121,7 +125,7 @@ def home():
     guesses = session.get("guesses", [])
     guess_count = len(guesses)
 
-    # Restore latest valid guess, so invalid guesses do not make the display white.
+    # Restore latest valid guess, so invalid or duplicate guesses do not change display.
     if guesses:
         latest_guess = guesses[-1]
 
