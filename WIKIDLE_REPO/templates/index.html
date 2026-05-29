@@ -54,7 +54,12 @@
     <div class="image-container">
         <h3>Image hint</h3>
         <div class="image-box">
+            {% if wiki_picture %}
             <img src="{{ url_for('static', filename=wiki_picture) }}" class="wiki-image {{ image_blur }}">
+            {% else %}
+            <img src="{{ url_for('static', filename=" images/hint_placeholder.jpg") }}"
+                class="wiki-image {{ image_blur }}">
+            {% endif %}
             {% if guess_count >= 1 and not image_revealed %}
             <form method="POST">
                 <button class="reveal-button" type="submit" name="action" value="reveal_image">
