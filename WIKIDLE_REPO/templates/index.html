@@ -17,7 +17,7 @@
         <div class="popup-box">
             <h2>Welcome to WIKIDLE!</h2>
             <p>You will be given a summary of a random Wikipedia article, your goal is to guess which article it is!</p>
-            <p>Wikidle is a daily game, so it updates everyday with a new article to be guessed.</p>
+            <p>This version of Wikidle is replayable, but the goal is to have the game only be one article per day.</p>
             <p>Press start to begin guessing.</p>
             <form method="POST">
                 <button type="submit" name="action" value="start">Start Game</button>
@@ -54,8 +54,12 @@
     <div class="image-container">
         <h3>Image hint</h3>
         <div class="image-box">
-            <img src="{{ url_for('static', filename=wiki_picture) }}"
+            {% if wiki_picture %}
+            <img src="{{ url_for('static', filename=wiki_picture) }}" class="wiki-image {{ image_blur }}">
+            {% else %}
+            <img src="{{ url_for('static', filename=" images/hint_placeholder.jpg") }}"
                 class="wiki-image {{ image_blur }}">
+            {% endif %}
             {% if guess_count >= 1 and not image_revealed %}
             <form method="POST">
                 <button class="reveal-button" type="submit" name="action" value="reveal_image">
@@ -69,8 +73,7 @@
     <!-- search bar/box + button-->
     {% if game_state == "playing" %}
     <form method="POST" class="search-form">
-        <input type="text" name="search" placeholder="Guess something..." list="autocomplete-options"
-            autocomplete="off">
+        <input type="text" name="search" id="search-input" placeholder="Guess something..." autocomplete="off">
 
         <datalist id="autocomplete-options">
             {% for option in autocomplete_options %}
@@ -81,6 +84,19 @@
         <button type="submit" name="action" value="guess">Guess</button>
         <button type="submit" name="action" value="reset">Reset</button>
     </form>
+
+    <script>
+        const searchInput = document.getElementById("search-input");
+        const minChars = 2; // change to 3 if you prefer
+
+        searchInput.addEventListener("input", () => {
+            if (searchInput.value.length >= minChars) {
+                searchInput.setAttribute("list", "autocomplete-options");
+            } else {
+                searchInput.removeAttribute("list");
+            }
+        });
+    </script>
     {% endif %}
 
     {% if invalid_guess %}
