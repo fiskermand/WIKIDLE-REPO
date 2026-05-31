@@ -10,13 +10,42 @@ browser = webdriver.Chrome()
 browser.get("https://en.wikipedia.org/wiki/Wikipedia:Popular_pages")
 
 
-articles = browser.find_elements(By.CSS_SELECTOR, "table.wikitable tr td:nth-child(2) a")
+tables = browser.find_elements(By.CSS_SELECTOR, "table.wikitable")
 
-article_titles = []
-for article in articles:
-    title = article.text.strip()
-    if title:
-        article_titles.append(title)
+scraped_data = []
+
+for table in tables:
+    # Look backwards from the current table to find the nearest preceding heading
+    # This completely avoids the Table of Contents confusion
+    try:
+        # Modern Wikipedia layout uses 'div.mw-heading' wrappers for headings
+        heading_element = table.find_element(By.XPATH, "./preceding::div[contains(@class, 'mw-heading')][1]")
+        category_text = heading_element.text.strip()
+    except:
+        try:
+            # Fallback to older legacy Wikipedia heading tags if they exist
+            heading_element = table.find_element(By.XPATH, "./preceding::h3[1]|./preceding::h2[1]")
+            category_text = heading_element.text.strip()
+        except:
+            category_text = "Top-100"  # Default fallback if no header is found above it
+
+    # Clean up the '[edit]' text Wikipedia attaches to section headers
+    if category_text.endswith("[edit]"):
+        category_text = category_text[:-6].strip()
+        
+
+    if "Navigation box" in category_text or "Contents" in category_text:
+        continue
+
+    articles = table.find_elements(By.CSS_SELECTOR, "tr td:nth-child(2) a")
+    for article in articles:
+        title = article.text.strip()
+        # Filter out bad links/empty spaces
+        if title and not any(title.startswith(p) for p in ["Special:", "Wikipedia:", "Help:", "Portal:"]):
+            scraped_data.append({
+                "Category": category_text,
+                "Article Title": title
+            })
 
 browser.quit()
 
@@ -78,11 +107,11 @@ def find_relevant_image(article):
 
 
 # Save articles into lists
-headers = ["title", "summary", "image"]
+headers = ["title", "summary", "image", "category"]
 article_elements = []
 
-for article in article_titles:
-    wiki_page = wiki_api.page(article)
+for article in scraped_data:
+    wiki_page = wiki_api.page(article["Article Title"])
 
     if not wiki_page.exists():
         continue
@@ -92,7 +121,7 @@ for article in article_titles:
     clean_summary = wiki_page.summary.replace("\n", " ").strip()
 
     print(f"Processed: {wiki_page.title} -> Image: {img_link}")
-    article_elements.append([wiki_page.title, clean_summary, img_link])
+    article_elements.append([article["Article Title"], clean_summary, img_link, article["Category"]])
 
 # Save to CSV
 with open("wiki_articles.csv", "w", newline="", encoding="utf-8") as file:
