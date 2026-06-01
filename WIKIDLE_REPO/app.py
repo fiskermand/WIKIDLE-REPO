@@ -24,6 +24,7 @@ def example_dict():
         articles[title] = {
             "wiki_name": title,
             "wiki_category": category,
+            "wiki_theme": category,
             "wiki_text": summary,
             "wiki_picture": picture,}
     return articles
@@ -34,6 +35,7 @@ def example_dict():
 def home():
     search_text = "..."
     game_state = session.get("game_state", "not_started")
+    articles = example_dict()
 
     invalid_guess = False
     prev_guess = False
@@ -55,21 +57,20 @@ def home():
     wiki_category = ""
     wiki_theme = ""
     wiki_name_blurred = ""
-
     #restore current wiki page from session
-    if wiki_page in example_dict:
-        wiki_name = example_dict[wiki_page]["wiki_name"]
-        wiki_text = example_dict[wiki_page]["wiki_text"]
-        wiki_category = example_dict[wiki_page]["wiki_category"]
-        wiki_theme = example_dict[wiki_page]["wiki_theme"]
+    if wiki_page in articles:
+        wiki_name = articles[wiki_page]["wiki_name"]
+        wiki_text = articles[wiki_page]["wiki_text"]
+        wiki_category = articles[wiki_page]["wiki_category"]
+        wiki_theme = articles[wiki_page]["wiki_theme"]
         wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
-        wiki_picture = example_dict[wiki_page]["wiki_picture"]
+        wiki_picture = articles[wiki_page]["wiki_picture"]
 
     if request.method == "POST":
         action = request.form.get("action")
 
         if action == "start":
-            wiki_page = random.choice(list(example_dict.keys()))
+            wiki_page = random.choice(list(articles.keys()))
 
             session["wiki_page"] = wiki_page
             session["image_revealed"] = False
@@ -79,11 +80,11 @@ def home():
 
             game_state = "playing"
 
-            wiki_name = example_dict[wiki_page]["wiki_name"]
-            wiki_text = example_dict[wiki_page]["wiki_text"]
-            wiki_category = example_dict[wiki_page]["wiki_category"]
-            wiki_theme = example_dict[wiki_page]["wiki_theme"]
-            wiki_picture = example_dict[wiki_page]["wiki_picture"]
+            wiki_name = articles[wiki_page]["wiki_name"]
+            wiki_text = articles[wiki_page]["wiki_text"]
+            wiki_category = articles[wiki_page]["wiki_category"]
+            wiki_theme = articles[wiki_page]["wiki_theme"]
+            wiki_picture = articles[wiki_page]["wiki_picture"]
             wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
 
         elif action == "reset":
@@ -122,16 +123,16 @@ def home():
                 guess["name"] == search_text for guess in guesses
             )
 
-            if search_text not in example_dict:
+            if search_text not in articles:
                 invalid_guess = True
 
             elif already_guessed:
                 prev_guess = True
 
             else:
-                guess_name = example_dict[search_text]["wiki_name"]
-                guess_category = example_dict[search_text]["wiki_category"]
-                guess_theme = example_dict[search_text]["wiki_theme"]
+                guess_name = articles[search_text]["wiki_name"]
+                guess_category = articles[search_text]["wiki_category"]
+                guess_theme = articles[search_text]["wiki_theme"]
 
                 if search_text == wiki_name:
                     guess_color = "green"
@@ -198,7 +199,7 @@ def home():
         theme_color=theme_color,
         guess_theme=guess_theme,
         guess_category=guess_category,
-        autocomplete_options=example_dict.keys(),
+        autocomplete_options=articles.keys(),
         guesses=guesses,
         guess_count=guess_count,
         wiki_name_blurred=wiki_name_blurred,
