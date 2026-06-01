@@ -1,3 +1,5 @@
+import psycopg2
+
 connection = psycopg2.connect(
     host="",#local host
     user="",#postgres
