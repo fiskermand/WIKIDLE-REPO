@@ -1,6 +1,6 @@
 import psycopg2
 
-from WIKIDLE_REPO.connection import connection
+from connection import connection
 # pip install psycopg2-binary
 
 cursor = connection.cursor()

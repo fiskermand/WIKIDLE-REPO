@@ -29,7 +29,12 @@
     <!-- END SCREEN -->
     {% if game_state == "finished" %}
     <div class="popup-background">
-        <div class="popup-box">
+        <div class="popup-box endscreen">
+            <!-- X BUTTON -->
+            <button class="close-button" onclick="document.querySelector('.popup-background').style.display='none'">
+                ✕
+            </button>
+
             <h2>You got it!</h2>
             <p>The answer was {{ wiki_name }}!</p>
             <p>You used {{ guess_count }} guess(es).</p>
@@ -55,12 +60,12 @@
         <h3>Image hint</h3>
         <div class="image-box">
             {% if wiki_picture %}
-            <img src="{{ url_for('static', filename=wiki_picture) }}" class="wiki-image {{ image_blur }}">
+            <img src="{{ wiki_picture }}" class="wiki-image {{ image_blur }}">
             {% else %}
             <img src="{{ url_for('static', filename=" images/hint_placeholder.jpg") }}"
                 class="wiki-image {{ image_blur }}">
             {% endif %}
-            {% if guess_count >= 1 and not image_revealed %}
+            {% if guess_count >= 1 and not image_revealed %} <!-- amount of guesses needed to show image -->
             <form method="POST">
                 <button class="reveal-button" type="submit" name="action" value="reveal_image">
                     Reveal Image
@@ -138,19 +143,23 @@
             </div>
         </div>
 
-        <!-- theme box-->
-        <div class=" box-column">
-            <h3>Theme</h3>
-            <div class="small-box {{ theme_color }}">
-                {% if guess_theme %}
-                <p class=" search-result">{{ guess_theme }}</p>
-                {% else %}
-                <p>...</p>
-                {% endif %}
-            </div>
-        </div>
+    </div>
+
+    {% if game_state == "finished" %}
+    <div class="end-controls">
+
+        <form method="POST">
+            <button type="submit" name="action" value="start">
+                Play Again
+            </button>
+
+            <button type="submit" name="action" value="reset">
+                Back to Start
+            </button>
+        </form>
 
     </div>
+    {% endif %}
 
     <!-- PREVIOUS GUESS BOXES-->
     {% for guess in guesses[:-1] %}
@@ -167,13 +176,6 @@
         <div class="box-column">
             <div class="small-box {{ guess.category_color }}">
                 <p class="search-result">{{ guess.category }}</p>
-            </div>
-        </div>
-
-        <!-- previous theme -->
-        <div class="box-column">
-            <div class="small-box {{ guess.theme_color }}">
-                <p class="search-result">{{ guess.theme }}</p>
             </div>
         </div>
 
