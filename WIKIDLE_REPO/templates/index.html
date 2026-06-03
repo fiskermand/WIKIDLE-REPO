@@ -65,7 +65,7 @@
             <img src="{{ url_for('static', filename=" images/hint_placeholder.jpg") }}"
                 class="wiki-image {{ image_blur }}">
             {% endif %}
-            {% if guess_count >= 1 and not image_revealed %} <!-- amount of guesses needed to show image -->
+            {% if guess_count >= 3 and not image_revealed and not (wiki_name == guess_name) %} <!-- amount of guesses needed to show image -->
             <form method="POST">
                 <button class="reveal-button" type="submit" name="action" value="reveal_image">
                     Reveal Image

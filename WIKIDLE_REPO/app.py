@@ -4,12 +4,25 @@ import psycopg2
 from connection import connection
 
 # TODO:
-# wikiapi til sql db + regex til at fjerne navn/whatever
-# implementer sql delen
 # login / leaderboard
+# måske sørge for at artikler er mellem 300 og 3000 tegn? (eller noget i den retning, nogen artikler kan godt fylde alt for lidt/meget)
+# final design touches
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
+
+def mask_title_in_text(text, title): # regex til at erstatte titel i summary med "____"
+    if not text:
+        return text
+
+    words = title.split()
+
+    for word in words:
+        pattern = r'\b' + re.escape(word) + r'\b'
+        text = re.sub(pattern, '_____', text, flags=re.IGNORECASE)
+
+    return text
+
 
 def example_dict():
     cursor = connection.cursor()
@@ -19,14 +32,21 @@ def example_dict():
     """)
     rows = cursor.fetchall()
     cursor.close()
+
     articles = {}
+
     for title, summary, category, picture in rows:
+
+        masked_text = mask_title_in_text(summary, title)
+
         articles[title] = {
             "wiki_name": title,
             "wiki_category": category,
             "wiki_theme": category,
-            "wiki_text": summary,
-            "wiki_picture": picture,}
+            "wiki_text": masked_text,
+            "wiki_picture": picture,
+        }
+
     return articles
 
 
@@ -181,7 +201,10 @@ def home():
         if guess_name == wiki_name:
             wiki_name_blurred = wiki_name
 
-        if session.get("image_revealed", False):
+        image_revealed = session.get("image_revealed", False)
+        game_won = (wiki_name == guess_name)
+
+        if image_revealed or game_won:
             image_blur = ""
         else:
             image_blur = "blurred"
@@ -209,7 +232,8 @@ def home():
         wiki_page=wiki_page,
         wiki_picture=wiki_picture,
         image_blur=image_blur,
-        image_revealed=session.get("image_revealed", False)
+        image_revealed=session.get("image_revealed", False),
+        game_won=(wiki_name == guess_name)
     )
 
 
