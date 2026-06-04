@@ -3,9 +3,6 @@ import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
-from dotenv import load_dotenv
-
-load_dotenv()
 
 connection = psycopg2.connect(
     host=os.getenv("DB_HOST", "localhost"),
@@ -14,5 +11,3 @@ connection = psycopg2.connect(
     user=os.getenv("DB_USER", "postgres"),
     password=os.getenv("DB_PASSWORD", "")
 )
-cursor = connection.cursor()
-print("hell yeah")
