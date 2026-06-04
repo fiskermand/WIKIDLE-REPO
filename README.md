@@ -5,6 +5,11 @@ Our project is a  game we have called 'Wikidle', the goal of the game is to gues
 
 Currently the game returns a new Wikipedia article every time the game is reset, as a proof of concept and to make the testing/grading process smoother, but our original idea is to have it be a "daily game" ('dle'-game), hence the name. 
 
+The game uses SQL to interact with a database, containing the tables:
+- wikipedia_articles (title, summary, category, picture)
+- users(id, username, password_hash, created_at)
+- game_results (id, user_id, article_title, guesses, created_at)
+
 ## Guide to running the game:
 1. This project uses PostgreSQL + pgAdmin 4.
 2. In pgAdmin, create a database named wikipedia_articles.
