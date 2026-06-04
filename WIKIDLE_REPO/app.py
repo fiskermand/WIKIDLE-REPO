@@ -1,14 +1,185 @@
 from flask import Flask, render_template, request, session
+from werkzeug.security import generate_password_hash, check_password_hash
 import re, random
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from connection import connection
 
 # TODO:
-# login / leaderboard
 # final design touches
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
+
+def init_game_tables():
+    cursor = connection.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS game_results (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            article_title TEXT NOT NULL REFERENCES wikipedia_articles(title) ON DELETE CASCADE,
+            guesses INTEGER NOT NULL CHECK (guesses > 0),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_game_results_article_title
+        ON game_results(article_title);
+    """)
+    connection.commit()
+    cursor.close()
+
+
+def get_current_user():
+    if "user_id" not in session:
+        return None
+
+    return {
+        "id": session["user_id"],
+        "username": session.get("username", "")
+    }
+
+
+def create_user(username, password):
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            "INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id;",
+            (username, generate_password_hash(password))
+        )
+        user_id = cursor.fetchone()[0]
+        connection.commit()
+        return user_id, None
+
+    except psycopg2.errors.UniqueViolation:
+        connection.rollback()
+        return None, "That username is already taken."
+
+    finally:
+        cursor.close()
+
+
+def login_user(username, password):
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+    cursor.execute(
+        "SELECT id, username, password_hash FROM users WHERE username = %s;",
+        (username,)
+    )
+    user = cursor.fetchone()
+    cursor.close()
+
+    if not user or not check_password_hash(user["password_hash"], password):
+        return False
+
+    session["user_id"] = user["id"]
+    session["username"] = user["username"]
+    return True
+
+
+def save_game_result(article_title, guesses):
+    if not get_current_user() or session.get("result_saved"):
+        return
+
+    cursor = connection.cursor()
+    cursor.execute(
+        """
+        INSERT INTO game_results (user_id, article_title, guesses)
+        VALUES (%s, %s, %s);
+        """,
+        (session["user_id"], article_title, guesses)
+    )
+    connection.commit()
+    cursor.close()
+
+    session["result_saved"] = True
+
+
+def get_leaderboard(article_title):
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute(
+        """
+        SELECT guesses, COUNT(*) AS player_count
+        FROM game_results
+        WHERE article_title = %s
+          AND guesses BETWEEN 1 AND 10
+        GROUP BY guesses
+        ORDER BY guesses;
+        """,
+        (article_title,)
+    )
+
+    rows = cursor.fetchall()
+
+    # Convert database rows into a dictionary like:
+    # {1: 3, 2: 5, 3: 0, ...}
+    counts_by_guess = {
+        row["guesses"]: row["player_count"]
+        for row in rows
+    }
+
+    # Always show guesses 1 through 10, even if count is 0
+    histogram = []
+    max_count = 0
+
+    for guess_number in range(1, 11):
+        player_count = counts_by_guess.get(guess_number, 0)
+        max_count = max(max_count, player_count)
+
+        histogram.append({
+            "guesses": guess_number,
+            "player_count": player_count
+        })
+
+    # Add a bar height percentage for CSS
+    for row in histogram:
+        if max_count == 0:
+            row["height_percent"] = 0
+        else:
+            row["height_percent"] = round((row["player_count"] / max_count) * 100)
+
+    cursor.execute(
+        """
+        SELECT u.username, MIN(gr.guesses) AS best_guesses
+        FROM game_results gr
+        JOIN users u ON u.id = gr.user_id
+        WHERE gr.article_title = %s
+        GROUP BY u.username
+        ORDER BY best_guesses ASC, u.username ASC
+        LIMIT 10;
+        """,
+        (article_title,)
+    )
+
+    top_scores = cursor.fetchall()
+
+    cursor.close()
+    return histogram, top_scores
+
+
+def reset_game_to_start():
+    user_id = session.get("user_id")
+    username = session.get("username")
+
+    session.clear()
+
+    if user_id:
+        session["user_id"] = user_id
+        session["username"] = username
+
+    session["game_state"] = "not_started"
+    session["image_revealed"] = False
+    session["guesses"] = []
+    session["wiki_page"] = None
 
 def mask_title_in_text(text, title): # regex til at erstatte titel i summary med "____"
     if not text:
@@ -79,15 +250,24 @@ def example_dict():
     return articles
 
 
-
 @app.route("/", methods=["GET", "POST"])
 def home():
+    init_game_tables()
+
     search_text = "..."
     game_state = session.get("game_state", "not_started")
     articles = example_dict()
 
+    # IMPORTANT: this must come before any POST/action logic
+    current_user = get_current_user()
+
     invalid_guess = False
     prev_guess = False
+    auth_error = None
+
+    leaderboard_histogram = []
+    leaderboard_top_scores = []
+
     image_blur = "blurred"
     wiki_picture = ""
 
@@ -99,13 +279,13 @@ def home():
     category_color = "white"
     theme_color = "white"
 
-    #defaults for when the game has not started yet
     wiki_page = session.get("wiki_page")
     wiki_name = ""
     wiki_text = "..."
     wiki_category = ""
     wiki_theme = ""
     wiki_name_blurred = ""
+
     #restore current wiki page from session
     if wiki_page in articles:
         wiki_name = articles[wiki_page]["wiki_name"]
@@ -118,7 +298,35 @@ def home():
     if request.method == "POST":
         action = request.form.get("action")
 
-        if action == "start":
+        if action in ["login", "register"]:
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "")
+
+            if not username or not password:
+                auth_error = "Please enter a username and password."
+
+            elif action == "register":
+                user_id, error = create_user(username, password)
+
+                if error:
+                    auth_error = error
+                else:
+                    session["user_id"] = user_id
+                    session["username"] = username
+                    current_user = get_current_user()
+
+            else:
+                if login_user(username, password):
+                    current_user = get_current_user()
+                else:
+                    auth_error = "Wrong username or password."
+
+        elif action == "logout":
+            session.clear()
+            current_user = None
+            game_state = "not_started"
+
+        elif action == "start" and current_user:
             wiki_page = random.choice(list(articles.keys()))
 
             session["wiki_page"] = wiki_page
@@ -126,6 +334,7 @@ def home():
             session["game_state"] = "playing"
             session["guess_count"] = 0
             session["guesses"] = []
+            session["result_saved"] = False
 
             game_state = "playing"
 
@@ -137,12 +346,7 @@ def home():
             wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
 
         elif action == "reset":
-            session.clear()
-            session["game_state"] = "not_started"
-            session["image_revealed"] = False
-            session["guesses"] = []
-            session["wiki_page"] = None
-
+            reset_game_to_start()
             game_state = "not_started"
             search_text = "..."
 
@@ -152,6 +356,7 @@ def home():
             wiki_category = ""
             wiki_theme = ""
             wiki_name_blurred = ""
+            wiki_picture = ""
 
             guess_name = ""
             guess_category = ""
@@ -213,6 +418,9 @@ def home():
                 session["guesses"] = guesses
                 session["guess_count"] = len(guesses)
 
+                if search_text == wiki_name:
+                    save_game_result(wiki_name, len(guesses))
+
     guesses = session.get("guesses", [])
     guess_count = len(guesses)
 
@@ -237,6 +445,10 @@ def home():
             image_blur = ""
         else:
             image_blur = "blurred"
+    
+    if session.get("game_state") == "finished" and wiki_name:
+        leaderboard_histogram, leaderboard_top_scores = get_leaderboard(wiki_name)
+        game_state = "finished"
 
     return render_template(
         "index.html",
@@ -262,10 +474,15 @@ def home():
         wiki_picture=wiki_picture,
         image_blur=image_blur,
         image_revealed=session.get("image_revealed", False),
-        game_won=(wiki_name == guess_name)
+        game_won=(wiki_name == guess_name),
+        current_user=current_user,
+        auth_error=auth_error,
+        leaderboard_histogram=leaderboard_histogram,
+        leaderboard_top_scores=leaderboard_top_scores
     )
 
 
 # runs the shit
 if __name__ == "__main__":
+    init_game_tables()
     app.run(debug=True)

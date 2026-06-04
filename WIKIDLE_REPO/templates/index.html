@@ -16,14 +16,44 @@
         article the excerpt below is from!
     </p>
 
+    <!-- LOGIN SCREEN -->
+    {% if not current_user %}
+    <div class="popup-background">
+        <div class="popup-box login-box">
+            <h2>Log in to WIKIDLE</h2>
+            <p>Log in or create an account before starting the game.</p>
+
+            {% if auth_error %}
+            <p class="error-message small-error">{{ auth_error }}</p>
+            {% endif %}
+
+            <form method="POST" class="login-form">
+                <input type="text" name="username" placeholder="Username" autocomplete="username">
+                <input type="password" name="password" placeholder="Password" autocomplete="current-password">
+
+                <div>
+                    <button type="submit" name="action" value="login">Log In</button>
+                    <button type="submit" name="action" value="register">Create Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- START SCREEN -->
-    {% if game_state == "not_started" %}
+    {% if current_user and game_state == "not_started" %}
     <div class="popup-background">
         <div class="popup-box">
             <h2>Welcome to WIKIDLE!</h2>
             <p>You will be given a summary of a random Wikipedia article, your goal is to guess which article it is!</p>
             <p>This version of Wikidle is replayable, but the goal is to have the game only be one article per day.</p>
             <p>Press start to begin guessing.</p>
+            {% if current_user %}
+            <form method="POST" class="user-bar">
+                <span>Logged in as <strong>{{ current_user.username }}</strong></span>
+                <button type="submit" name="action" value="logout">Log out</button>
+            </form>
+            {% endif %}
             <form method="POST">
                 <button type="submit" name="action" value="start">Start Game</button>
             </form>
@@ -34,8 +64,7 @@
     <!-- END SCREEN -->
     {% if game_state == "finished" %}
     <div class="popup-background">
-        <div class="popup-box endscreen">
-            <!-- X BUTTON -->
+        <div class="popup-box endscreen leaderboard-popup">
             <button class="close-button" onclick="document.querySelector('.popup-background').style.display='none'">
                 ✕
             </button>
@@ -43,6 +72,35 @@
             <h2>You got it!</h2>
             <p>The answer was {{ wiki_name }}!</p>
             <p>You used {{ guess_count }} guess(es).</p>
+
+            <h3>Guess distribution</h3>
+
+            <div class="vertical-chart-wrapper">
+                <div class="y-axis-label">Players</div>
+
+                <div class="vertical-chart">
+                    {% for row in leaderboard_histogram %}
+                    <div class="vertical-bar-column">
+                        <div class="bar-value">
+                            {{ row.player_count }}
+                        </div>
+
+                        <div class="vertical-bar-area">
+                            <div class="vertical-bar" style="height: {{ row.height_percent }}%;">
+                            </div>
+                        </div>
+
+                        <div class="x-label">
+                            {{ row.guesses }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="x-axis-label">
+                Number of guesses
+            </div>
 
             <form method="POST">
                 <button type="submit" name="action" value="start">Play Again</button>
@@ -150,22 +208,6 @@
         </div>
 
     </div>
-
-    {% if game_state == "finished" %}
-    <div class="end-controls">
-
-        <form method="POST">
-            <button type="submit" name="action" value="start">
-                Play Again
-            </button>
-
-            <button type="submit" name="action" value="reset">
-                Back to Start
-            </button>
-        </form>
-
-    </div>
-    {% endif %}
 
     <!-- PREVIOUS GUESS BOXES-->
     {% for guess in guesses[:-1] %}

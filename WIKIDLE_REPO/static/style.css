@@ -227,3 +227,116 @@ button {
     opacity: 0.9;
     font-size: 16px;
 }
+
+.user-bar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: white;
+    opacity: 0.9;
+    padding: 8px 12px;
+    border: 2px solid black;
+    border-radius: 10px;
+}
+
+.user-bar button {
+    margin-left: 8px;
+    padding: 5px 10px;
+}
+
+.login-box input {
+    display: block;
+    width: 85%;
+    margin: 10px auto;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid black;
+    font-size: 16px;
+}
+
+.small-error {
+    font-size: 16px;
+}
+
+.leaderboard-popup {
+    width: 620px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.vertical-chart-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto 5px auto;
+    width: 95%;
+}
+
+.y-axis-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.vertical-chart {
+    display: flex;
+    align-items: end;
+    justify-content: space-around;
+    gap: 10px;
+
+    width: 500px;
+    height: 240px;
+
+    border-left: 2px solid black;
+    border-bottom: 2px solid black;
+
+    padding: 10px 10px 0 10px;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.vertical-bar-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: end;
+
+    height: 100%;
+    width: 38px;
+}
+
+.bar-value {
+    height: 20px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.vertical-bar-area {
+    display: flex;
+    align-items: end;
+    height: 180px;
+    width: 100%;
+}
+
+.vertical-bar {
+    width: 100%;
+    min-height: 0;
+    background: black;
+    border-radius: 6px 6px 0 0;
+}
+
+.x-label {
+    height: 25px;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.x-axis-label {
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.score-list {
+    display: inline-block;
+    text-align: left;
+}

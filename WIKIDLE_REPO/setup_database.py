@@ -28,6 +28,30 @@ def main():
         );
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS game_results (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            article_title TEXT NOT NULL REFERENCES wikipedia_articles(title) ON DELETE CASCADE,
+            guesses INTEGER NOT NULL CHECK (guesses > 0),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_game_results_article_title
+        ON game_results(article_title);
+    """)
+
     with open(CSV_FILE, "r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
 
