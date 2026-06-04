@@ -13,7 +13,7 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD", "")
 }
 
-CSV_FILE = "wiki_articles.csv"
+CSV_FILE = "WIKIDLE_REPO/wiki_articles.csv"
 
 def main():
     connection = psycopg2.connect(**DB_CONFIG)
