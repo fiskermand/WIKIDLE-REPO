@@ -5,7 +5,6 @@ from connection import connection
 
 # TODO:
 # login / leaderboard
-# måske sørge for at artikler er mellem 300 og 3000 tegn? (eller noget i den retning, nogen artikler kan godt fylde alt for lidt/meget)
 # final design touches
 
 app = Flask(__name__)
@@ -35,7 +34,34 @@ def example_dict():
 
     articles = {}
 
+    def remove_first_sentence_parentheses(text):
+        if not text:
+            return text
+    # fjerner første parantes i første sætning af en artikel. Parantesen indeholder ofte udtalelse af artikel, f.eks (Swedish: [ˈɡrêːta ˈtʉ̂ːnbærj] ; born 3 January 2003).
+        first_period = text.find(".")
+
+        if first_period == -1:
+            first_sentence = text
+            rest = ""
+        else:
+            first_sentence = text[:first_period]
+            rest = text[first_period:]
+
+        first_sentence = re.sub(r"\([^)]*\)", "", first_sentence, count=1)
+
+        return first_sentence + rest
     for title, summary, category, picture in rows:
+        if not summary or len(summary) < 300: # artikler under 300 tegn bliver fjernet. Artikler over 2000 tegn bliver forkortet til nærmeste punktum
+            continue
+        if len(summary) > 2000:
+            cutoff = summary[:2000].rfind(".")
+
+            if cutoff != -1:
+                summary = summary[:cutoff + 1]
+            else:
+                summary = summary[:2000]
+        
+        summary = remove_first_sentence_parentheses(summary)
 
         masked_text = mask_title_in_text(summary, title)
 
