@@ -4,7 +4,7 @@
 1. This project uses PostgreSQL + pgAdmin 4.
 2. In pgAdmin, create a database named wikipedia_articles.
 3. Open the project folder.
-4. Copy .env.example, rename it .env and enter your PostgreSQL password.
+4. Copy '.env.example', rename it '.env' and enter your PostgreSQL password.
 5. Run: pip install -r requirements.txt
 6. Run: python setup_database.py
 7. Run: python app.py

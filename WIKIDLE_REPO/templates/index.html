@@ -12,8 +12,9 @@
     <h1>WIKIDLE</h1>
     <p>Simply guess what
         <a href="https://en.wikipedia.org/wiki/Main_Page" target="_blank">
-        Wikipedia</a>
-        article the excerpt below is from!</p>
+            Wikipedia</a>
+        article the excerpt below is from!
+    </p>
 
     <!-- START SCREEN -->
     {% if game_state == "not_started" %}
@@ -66,10 +67,11 @@
             {% if wiki_picture %}
             <img src="{{ wiki_picture }}" class="wiki-image {{ image_blur }}">
             {% else %}
-            <img src="{{ url_for('static', filename=" images/hint_placeholder.jpg") }}"
+            <img src="{{ url_for('static', filename='images/hint_placeholder.jpg') }}"
                 class="wiki-image {{ image_blur }}">
             {% endif %}
-            {% if guess_count >= 3 and not image_revealed and not (wiki_name == guess_name) %} <!-- amount of guesses needed to show image -->
+            {% if guess_count >= 3 and not image_revealed and not (wiki_name == guess_name) %}
+            <!-- amount of guesses needed to show image -->
             <form method="POST">
                 <button class="reveal-button" type="submit" name="action" value="reveal_image">
                     Reveal Image
@@ -138,7 +140,7 @@
         <!-- category box-->
         <div class="box-column">
             <h3>Category</h3>
-            <div class="small-box {{ category_color }}"">
+            <div class="small-box {{ category_color }}">
                 {% if guess_category %}
                 <p class=" search-result">{{ guess_category }}</p>
                 {% else %}
