@@ -1,20 +1,20 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-import re, random
+import re
+import random
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from connection import get_connection
 import os
 
-# TODO:
-# final design touches
-
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
+
 
 def init_game_tables():
     connection = get_connection()
     cursor = connection.cursor()
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -23,6 +23,7 @@ def init_game_tables():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS game_results (
             id SERIAL PRIMARY KEY,
@@ -32,10 +33,17 @@ def init_game_tables():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_game_results_article_title
         ON game_results(article_title);
     """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_wikipedia_articles_title
+        ON wikipedia_articles(title);
+    """)
+
     connection.commit()
     cursor.close()
     connection.close()
@@ -60,6 +68,7 @@ def create_user(username, password):
             "INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id;",
             (username, generate_password_hash(password))
         )
+
         user_id = cursor.fetchone()[0]
         connection.commit()
         return user_id, None
@@ -76,11 +85,14 @@ def create_user(username, password):
 def login_user(username, password):
     connection = get_connection()
     cursor = connection.cursor(cursor_factory=RealDictCursor)
+
     cursor.execute(
         "SELECT id, username, password_hash FROM users WHERE username = %s;",
         (username,)
     )
+
     user = cursor.fetchone()
+
     cursor.close()
     connection.close()
 
@@ -89,15 +101,17 @@ def login_user(username, password):
 
     session["user_id"] = user["id"]
     session["username"] = user["username"]
+
     return True
 
 
 def save_game_result(article_title, guesses):
-    connection = get_connection()
     if not get_current_user() or session.get("result_saved"):
         return
 
+    connection = get_connection()
     cursor = connection.cursor()
+
     cursor.execute(
         """
         INSERT INTO game_results (user_id, article_title, guesses)
@@ -105,6 +119,7 @@ def save_game_result(article_title, guesses):
         """,
         (session["user_id"], article_title, guesses)
     )
+
     connection.commit()
     cursor.close()
     connection.close()
@@ -130,14 +145,11 @@ def get_leaderboard(article_title):
 
     rows = cursor.fetchall()
 
-    # Convert database rows into a dictionary like:
-    # {1: 3, 2: 5, 3: 0, ...}
     counts_by_guess = {
         row["guesses"]: row["player_count"]
         for row in rows
     }
 
-    # Always show guesses 1 through 10, even if count is 0
     histogram = []
     max_count = 0
 
@@ -150,7 +162,6 @@ def get_leaderboard(article_title):
             "player_count": player_count
         })
 
-    # Add a bar height percentage for CSS
     for row in histogram:
         if max_count == 0:
             row["height_percent"] = 0
@@ -174,6 +185,7 @@ def get_leaderboard(article_title):
 
     cursor.close()
     connection.close()
+
     return histogram, top_scores
 
 
@@ -191,87 +203,153 @@ def reset_game_to_start():
     session["image_revealed"] = False
     session["guesses"] = []
     session["wiki_page"] = None
+    session["wiki_article"] = None
+    session["result_saved"] = False
 
-def mask_title_in_text(text, title): # regex til at erstatte titel i summary med "____"
+
+def mask_title_in_text(text, title):
     if not text:
         return text
 
     words = title.split()
 
     for word in words:
-        pattern = r'\b' + re.escape(word) + r'\b'
-        text = re.sub(pattern, '_____', text, flags=re.IGNORECASE)
+        pattern = r"\b" + re.escape(word) + r"\b"
+        text = re.sub(pattern, "_____", text, flags=re.IGNORECASE)
 
     return text
 
 
-def example_dict():
+def remove_first_sentence_parentheses(text):
+    if not text:
+        return text
+
+    start = text.find("(")
+
+    if start == -1:
+        return text
+
+    depth = 0
+
+    for i in range(start, len(text)):
+        if text[i] == "(":
+            depth += 1
+        elif text[i] == ")":
+            depth -= 1
+
+            if depth == 0:
+                return text[:start] + text[i + 1:]
+
+    return text
+
+
+def format_article(row):
+    if not row:
+        return None
+
+    title = row["title"]
+    summary = row["summary"]
+    category = row["category"]
+    picture = row["picture"]
+
+    if not summary or len(summary) < 300:
+        return None
+
+    if len(summary) > 2000:
+        cutoff = summary[:2000].rfind(".")
+
+        if cutoff != -1:
+            summary = summary[:cutoff + 1]
+        else:
+            summary = summary[:2000]
+
+    summary = remove_first_sentence_parentheses(summary)
+    masked_text = mask_title_in_text(summary, title)
+
+    return {
+        "wiki_name": title,
+        "wiki_category": category,
+        "wiki_theme": category,
+        "wiki_text": masked_text,
+        "wiki_picture": picture,
+    }
+
+
+def get_random_article():
     connection = get_connection()
-    cursor = connection.cursor()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+
     cursor.execute("""
         SELECT title, summary, category, picture
         FROM wikipedia_articles
+        WHERE summary IS NOT NULL
+          AND length(summary) >= 300
+        ORDER BY random()
+        LIMIT 1;
     """)
-    rows = cursor.fetchall()
+
+    row = cursor.fetchone()
+
     cursor.close()
     connection.close()
 
-    articles = {}
+    return format_article(row)
 
-    def remove_first_sentence_parentheses(text):
-    # fjerner første parantes i første sætning af en artikel.
-    # Parantesen indeholder ofte udtalelse af artikel, f.eks (Swedish: [ˈɡrêːta ˈtʉ̂ːnbærj] ; born 3 January 2003).
-        start = text.find("(")
 
-        if start == -1:
-            return text
-        depth = 0
+def get_article_by_title(title):
+    connection = get_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
 
-        for i in range(start, len(text)):
-            if text[i] == "(":
-                depth += 1
-            elif text[i] == ")":
-                depth -= 1
+    cursor.execute("""
+        SELECT title, summary, category, picture
+        FROM wikipedia_articles
+        WHERE title = %s
+        LIMIT 1;
+    """, (title,))
 
-                if depth == 0:
-                    return text[:start] + text[i + 1:]
-        return text
-    
-    for title, summary, category, picture in rows:
-        if not summary or len(summary) < 300: # artikler under 300 tegn bliver fjernet. Artikler over 2000 tegn bliver forkortet til nærmeste punktum
-            continue
-        if len(summary) > 2000:
-            cutoff = summary[:2000].rfind(".")
+    row = cursor.fetchone()
 
-            if cutoff != -1:
-                summary = summary[:cutoff + 1]
-            else:
-                summary = summary[:2000]
-        
-        summary = remove_first_sentence_parentheses(summary)
+    cursor.close()
+    connection.close()
 
-        masked_text = mask_title_in_text(summary, title)
+    return format_article(row)
 
-        articles[title] = {
-            "wiki_name": title,
-            "wiki_category": category,
-            "wiki_theme": category,
-            "wiki_text": masked_text,
-            "wiki_picture": picture,
-        }
 
-    return articles
+def search_article_titles(query):
+    if not query or len(query.strip()) < 2:
+        return []
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT title
+        FROM wikipedia_articles
+        WHERE title ILIKE %s
+        ORDER BY title
+        LIMIT 20;
+    """, (f"%{query.strip()}%",))
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return [row[0] for row in rows]
+
+
+@app.route("/autocomplete")
+def autocomplete():
+    query = request.args.get("q", "").strip()
+    titles = search_article_titles(query)
+    return jsonify(titles)
 
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-    init_game_tables()
-
     search_text = "..."
     game_state = session.get("game_state", "not_started")
-    articles = example_dict()
 
-    # IMPORTANT: this must come before any POST/action logic
     current_user = get_current_user()
 
     invalid_guess = False
@@ -293,20 +371,21 @@ def home():
     theme_color = "white"
 
     wiki_page = session.get("wiki_page")
+    wiki_article = session.get("wiki_article")
+
     wiki_name = ""
     wiki_text = "..."
     wiki_category = ""
     wiki_theme = ""
     wiki_name_blurred = ""
 
-    #restore current wiki page from session
-    if wiki_page in articles:
-        wiki_name = articles[wiki_page]["wiki_name"]
-        wiki_text = articles[wiki_page]["wiki_text"]
-        wiki_category = articles[wiki_page]["wiki_category"]
-        wiki_theme = articles[wiki_page]["wiki_theme"]
+    if wiki_article:
+        wiki_name = wiki_article["wiki_name"]
+        wiki_text = wiki_article["wiki_text"]
+        wiki_category = wiki_article["wiki_category"]
+        wiki_theme = wiki_article["wiki_theme"]
+        wiki_picture = wiki_article["wiki_picture"]
         wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
-        wiki_picture = articles[wiki_page]["wiki_picture"]
 
     if request.method == "POST":
         action = request.form.get("action")
@@ -338,11 +417,25 @@ def home():
             session.clear()
             current_user = None
             game_state = "not_started"
+            wiki_article = None
+            wiki_page = None
+            wiki_name = ""
+            wiki_text = "..."
+            wiki_category = ""
+            wiki_theme = ""
+            wiki_picture = ""
+            wiki_name_blurred = ""
 
         elif action == "start" and current_user:
-            wiki_page = random.choice(list(articles.keys()))
+            article = get_random_article()
+
+            if not article:
+                return "No valid articles found. Check your Supabase wikipedia_articles table.", 500
+
+            wiki_page = article["wiki_name"]
 
             session["wiki_page"] = wiki_page
+            session["wiki_article"] = article
             session["image_revealed"] = False
             session["game_state"] = "playing"
             session["guess_count"] = 0
@@ -351,11 +444,11 @@ def home():
 
             game_state = "playing"
 
-            wiki_name = articles[wiki_page]["wiki_name"]
-            wiki_text = articles[wiki_page]["wiki_text"]
-            wiki_category = articles[wiki_page]["wiki_category"]
-            wiki_theme = articles[wiki_page]["wiki_theme"]
-            wiki_picture = articles[wiki_page]["wiki_picture"]
+            wiki_name = article["wiki_name"]
+            wiki_text = article["wiki_text"]
+            wiki_category = article["wiki_category"]
+            wiki_theme = article["wiki_theme"]
+            wiki_picture = article["wiki_picture"]
             wiki_name_blurred = re.sub(r"\S", "_", wiki_name)
 
         elif action == "reset":
@@ -364,6 +457,7 @@ def home():
             search_text = "..."
 
             wiki_page = None
+            wiki_article = None
             wiki_name = ""
             wiki_text = "..."
             wiki_category = ""
@@ -378,7 +472,7 @@ def home():
             guess_color = "white"
             category_color = "white"
             theme_color = "white"
-        
+
         elif action == "reveal_image":
             session["image_revealed"] = True
 
@@ -387,21 +481,24 @@ def home():
             guesses = session.get("guesses", [])
 
             already_guessed = any(
-                guess["name"] == search_text for guess in guesses
+                guess["name"].lower() == search_text.lower()
+                for guess in guesses
             )
 
-            if search_text not in articles:
+            guess_article = get_article_by_title(search_text)
+
+            if not guess_article:
                 invalid_guess = True
 
             elif already_guessed:
                 prev_guess = True
 
             else:
-                guess_name = articles[search_text]["wiki_name"]
-                guess_category = articles[search_text]["wiki_category"]
-                guess_theme = articles[search_text]["wiki_theme"]
+                guess_name = guess_article["wiki_name"]
+                guess_category = guess_article["wiki_category"]
+                guess_theme = guess_article["wiki_theme"]
 
-                if search_text == wiki_name:
+                if guess_name == wiki_name:
                     guess_color = "green"
                     wiki_name_blurred = wiki_name
                     session["game_state"] = "finished"
@@ -431,7 +528,7 @@ def home():
                 session["guesses"] = guesses
                 session["guess_count"] = len(guesses)
 
-                if search_text == wiki_name:
+                if guess_name == wiki_name:
                     save_game_result(wiki_name, len(guesses))
 
     guesses = session.get("guesses", [])
@@ -451,14 +548,14 @@ def home():
         if guess_name == wiki_name:
             wiki_name_blurred = wiki_name
 
-        image_revealed = session.get("image_revealed", False)
-        game_won = (wiki_name == guess_name)
+    image_revealed = session.get("image_revealed", False)
+    game_won = wiki_name == guess_name and wiki_name != ""
 
-        if image_revealed or game_won:
-            image_blur = ""
-        else:
-            image_blur = "blurred"
-    
+    if image_revealed or game_won:
+        image_blur = ""
+    else:
+        image_blur = "blurred"
+
     if session.get("game_state") == "finished" and wiki_name:
         leaderboard_histogram, leaderboard_top_scores = get_leaderboard(wiki_name)
         game_state = "finished"
@@ -476,7 +573,6 @@ def home():
         theme_color=theme_color,
         guess_theme=guess_theme,
         guess_category=guess_category,
-        autocomplete_options=articles.keys(),
         guesses=guesses,
         guess_count=guess_count,
         wiki_name_blurred=wiki_name_blurred,
@@ -487,7 +583,7 @@ def home():
         wiki_picture=wiki_picture,
         image_blur=image_blur,
         image_revealed=session.get("image_revealed", False),
-        game_won=(wiki_name == guess_name),
+        game_won=game_won,
         current_user=current_user,
         auth_error=auth_error,
         leaderboard_histogram=leaderboard_histogram,
@@ -495,7 +591,11 @@ def home():
     )
 
 
-# runs the shit
-if __name__ == "__main__":
+try:
     init_game_tables()
+except Exception as error:
+    print("Could not initialize game tables:", error)
+
+
+if __name__ == "__main__":
     app.run(debug=True)
