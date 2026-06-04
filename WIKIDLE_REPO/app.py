@@ -35,21 +35,24 @@ def example_dict():
     articles = {}
 
     def remove_first_sentence_parentheses(text):
-        if not text:
+    # fjerner første parantes i første sætning af en artikel.
+    # Parantesen indeholder ofte udtalelse af artikel, f.eks (Swedish: [ˈɡrêːta ˈtʉ̂ːnbærj] ; born 3 January 2003).
+        start = text.find("(")
+
+        if start == -1:
             return text
-    # fjerner første parantes i første sætning af en artikel. Parantesen indeholder ofte udtalelse af artikel, f.eks (Swedish: [ˈɡrêːta ˈtʉ̂ːnbærj] ; born 3 January 2003).
-        first_period = text.find(".")
+        depth = 0
 
-        if first_period == -1:
-            first_sentence = text
-            rest = ""
-        else:
-            first_sentence = text[:first_period]
-            rest = text[first_period:]
+        for i in range(start, len(text)):
+            if text[i] == "(":
+                depth += 1
+            elif text[i] == ")":
+                depth -= 1
 
-        first_sentence = re.sub(r"\([^)]*\)", "", first_sentence, count=1)
-
-        return first_sentence + rest
+                if depth == 0:
+                    return text[:start] + text[i + 1:]
+        return text
+    
     for title, summary, category, picture in rows:
         if not summary or len(summary) < 300: # artikler under 300 tegn bliver fjernet. Artikler over 2000 tegn bliver forkortet til nærmeste punktum
             continue

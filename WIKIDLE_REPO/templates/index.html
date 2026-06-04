@@ -4,12 +4,16 @@
 <head>
     <title>WIKIDLE</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap">
 </head>
 
 <body>
 
     <h1>WIKIDLE</h1>
-    <p>Simply guess what Wikipedia article the excerpt below is from!</p>
+    <p>Simply guess what
+        <a href="https://en.wikipedia.org/wiki/Main_Page" target="_blank">
+        Wikipedia</a>
+        article the excerpt below is from!</p>
 
     <!-- START SCREEN -->
     {% if game_state == "not_started" %}
