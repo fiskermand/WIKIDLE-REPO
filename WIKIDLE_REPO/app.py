@@ -3,15 +3,17 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import re, random
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from connection import connection
+from connection import get_connection
+import os
 
 # TODO:
 # final design touches
 
 app = Flask(__name__)
-app.secret_key = "dev-secret-key"
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
 
 def init_game_tables():
+    connection = get_connection()
     cursor = connection.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -36,6 +38,7 @@ def init_game_tables():
     """)
     connection.commit()
     cursor.close()
+    connection.close()
 
 
 def get_current_user():
@@ -49,6 +52,7 @@ def get_current_user():
 
 
 def create_user(username, password):
+    connection = get_connection()
     cursor = connection.cursor()
 
     try:
@@ -66,9 +70,11 @@ def create_user(username, password):
 
     finally:
         cursor.close()
+        connection.close()
 
 
 def login_user(username, password):
+    connection = get_connection()
     cursor = connection.cursor(cursor_factory=RealDictCursor)
     cursor.execute(
         "SELECT id, username, password_hash FROM users WHERE username = %s;",
@@ -76,6 +82,7 @@ def login_user(username, password):
     )
     user = cursor.fetchone()
     cursor.close()
+    connection.close()
 
     if not user or not check_password_hash(user["password_hash"], password):
         return False
@@ -86,6 +93,7 @@ def login_user(username, password):
 
 
 def save_game_result(article_title, guesses):
+    connection = get_connection()
     if not get_current_user() or session.get("result_saved"):
         return
 
@@ -99,11 +107,13 @@ def save_game_result(article_title, guesses):
     )
     connection.commit()
     cursor.close()
+    connection.close()
 
     session["result_saved"] = True
 
 
 def get_leaderboard(article_title):
+    connection = get_connection()
     cursor = connection.cursor(cursor_factory=RealDictCursor)
 
     cursor.execute(
@@ -163,6 +173,7 @@ def get_leaderboard(article_title):
     top_scores = cursor.fetchall()
 
     cursor.close()
+    connection.close()
     return histogram, top_scores
 
 
@@ -195,6 +206,7 @@ def mask_title_in_text(text, title): # regex til at erstatte titel i summary med
 
 
 def example_dict():
+    connection = get_connection()
     cursor = connection.cursor()
     cursor.execute("""
         SELECT title, summary, category, picture
@@ -202,6 +214,7 @@ def example_dict():
     """)
     rows = cursor.fetchall()
     cursor.close()
+    connection.close()
 
     articles = {}
 
