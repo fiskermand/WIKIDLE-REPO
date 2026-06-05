@@ -63,9 +63,9 @@
 
     <!-- END SCREEN -->
     {% if game_state == "finished" %}
-    <div class="popup-background">
+    <div class="popup-background" id="end-popup">
         <div class="popup-box endscreen leaderboard-popup">
-            <button class="close-button" onclick="document.querySelector('.popup-background').style.display='none'">
+            <button class="close-button" onclick="document.getElementById('end-popup').style.display='none'">
                 ✕
             </button>
 
@@ -107,6 +107,14 @@
                 <button type="submit" name="action" value="reset">Back to Start</button>
             </form>
         </div>
+    </div>
+
+    <!-- BUTTONS THAT STAY VISIBLE AFTER CLOSING THE POPUP -->
+    <div class="end-controls">
+        <form method="POST">
+            <button type="submit" name="action" value="start">Play Again</button>
+            <button type="submit" name="action" value="reset">Back to Start</button>
+        </form>
     </div>
     {% endif %}
 
