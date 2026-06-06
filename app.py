@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
-import random
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from connection import get_connection
