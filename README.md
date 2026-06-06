@@ -21,8 +21,8 @@ The game runs on https://wikidle-repo.onrender.com.
 
 ## E/R diagram:
 
-<img width="533" height="642" alt="5eb2750afc685640a69e03540290f55c" src="https://github.com/user-attachments/assets/acdb6ad4-cb34-4efc-9c3d-dae40398ab82" />
+<img width="1198" height="549" alt="WIKIDLE_ER" src="https://github.com/user-attachments/assets/c8efa90b-b0d4-4287-aadf-e86381515ca2" />
+
 
 ## AI Declaration:
--
-
+No AI was used to generate code in the creation of our project.
